@@ -283,12 +283,28 @@ export default {
     },
     // 从 localStorage 获取历史记录
     getHistory() {
+      const allHistory = this.getAllHistory();
+      this.history = Object.values(allHistory).flat();
+    },
+    getAllHistory() {
       const username = this.title;
-      const key = `${username}${this.currentDate}`
-      const storedHistory = JSON.parse(localStorage.getItem(key));
-      if (storedHistory) {
-        this.history = storedHistory;
+      const regex = new RegExp(`^${username}\\d{8}$`); // 匹配 username 加上八位数字
+      const historiesByDate = {}; // 使用日期作为键，存储每个日期的历史记录
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (regex.test(key)) {
+          const storedHistory = JSON.parse(localStorage.getItem(key));
+          if (storedHistory) {
+            const date = key.substring(key.indexOf(username) + username.length);
+            if (!historiesByDate[date]) {
+              historiesByDate[date] = storedHistory;
+            } else {
+              historiesByDate[date] = historiesByDate[date].concat(storedHistory);
+            }
+          }
+        }
       }
+      return historiesByDate;
     },
     // 将历史记录保存到localStorage，并且能够追加数据
     saveHistory() {
